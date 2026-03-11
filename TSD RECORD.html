@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSSD TSD - Traffic Services Detail</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            /* PALETA DE COLORES LSSD */
+            --lssd-olive-dark: #3b4436;
+            --lssd-olive-main: #4f5a48;
+            --lssd-beige-main: #d4c4b3;
+            --lssd-beige-light: #ece7e0;
+            --lssd-gold: #c5a059;
+            --lssd-yellow: #eec136;
+            --bg-main: #ffffff;
+            --bg-alt: #f9f8f6;
+            --text-main: #2b2b2b;
+            --text-light: #ffffff;
+            --danger: #b30000;
+        }
+
+        body {
+            font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--lssd-beige-light);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background-color: var(--lssd-olive-dark);
+            color: var(--text-light);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 5px solid var(--lssd-gold);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        header h2 {
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--lssd-beige-main);
+        }
+
+        .tabs button {
+            background-color: transparent;
+            color: var(--lssd-beige-main);
+            border: 1px solid var(--lssd-gold);
+            padding: 10px 18px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .tabs button:hover, .tabs button.active {
+            background-color: var(--lssd-gold);
+            color: var(--lssd-olive-dark);
+        }
+
+        /* --- CONTAINER PRINCIPAL --- */
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            background: var(--bg-main);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--lssd-olive-main);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* --- INFO OPERATIVO (BANNER) --- */
+        .info-banner {
+            background-color: var(--lssd-olive-main);
+            color: var(--lssd-beige-main);
+            padding: 15px 20px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--lssd-gold);
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .info-banner span strong {
+            color: var(--lssd-yellow);
+        }
+
+        /* --- ESTILOS DE FORMULARIO --- */
+        fieldset {
+            border: 1px solid var(--lssd-beige-main);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+            background-color: var(--bg-alt);
+        }
+
+        legend {
+            background-color: var(--lssd-olive-main);
+            color: var(--lssd-beige-main);
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid var(--lssd-gold);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+        }
+
+        label { margin-bottom: 7px; font-weight: bold; font-size: 0.85em; color: var(--lssd-olive-dark); text-transform: uppercase;}
+        
+        input[type="text"], input[type="date"], select {
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-size: 1em;
+            background-color: #fff;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--lssd-gold);
+            box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.3);
+        }
+
+        input:invalid { border-color: #e3a4a4; }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-submit, .btn-action {
+            background-color: var(--lssd-olive-main);
+            color: var(--text-light);
+            border: 1px solid var(--lssd-gold);
+            padding: 15px 25px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            width: 100%;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn-submit:hover, .btn-action:hover { 
+            background-color: var(--lssd-olive-dark); 
+            color: var(--lssd-yellow);
+        }
+        .btn-submit:disabled { background-color: #8c9388; cursor: not-allowed; border-color: #ccc; }
+        
+        .action-buttons-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn-export { 
+            padding: 12px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .btn-export.pdf { background-color: var(--lssd-yellow); color: var(--lssd-olive-dark); border-color: var(--lssd-olive-dark); }
+        .btn-export.pdf:hover { background-color: var(--lssd-gold); color: #fff; }
+
+        .btn-export.html { background-color: var(--lssd-olive-main); color: #fff; border-color: var(--lssd-gold); }
+        .btn-export.html:hover { background-color: var(--lssd-olive-dark); color: var(--lssd-yellow); }
+
+        .btn-export.reset { background-color: var(--danger); color: #fff; border-color: #800000; margin-left: auto; }
+        .btn-export.reset:hover { background-color: #800000; }
+
+        /* --- ESTILOS DE TABLA --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            font-size: 0.9em;
+            background-color: #fff;
+        }
+
+        th, td { border: 1px solid var(--lssd-beige-main); padding: 12px; text-align: left; }
+        th { 
+            background-color: var(--lssd-olive-dark); 
+            color: var(--lssd-beige-main); 
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--lssd-gold);
+        }
+        tr:nth-child(even) { background-color: var(--bg-alt); }
+        tr:hover { background-color: var(--lssd-beige-light); }
+
+        #cargosContainer {
+            background-color: #fcf6f6;
+            border-left: 5px solid var(--danger);
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            border-radius: 0 4px 4px 0;
+            border-top: 1px solid #ecc;
+            border-right: 1px solid #ecc;
+            border-bottom: 1px solid #ecc;
+        }
+
+        .admin-login { text-align: center; padding: 80px 20px; }
+        .admin-login input { padding: 12px; margin-right: 15px; width: 250px; border: 1px solid var(--lssd-beige-main); border-radius: 4px; }
+        .admin-login button { 
+            padding: 12px 25px; 
+            background-color: var(--lssd-olive-main); 
+            color: #fff; 
+            border: 1px solid var(--lssd-gold); 
+            cursor: pointer; 
+            border-radius: 4px; 
+            text-transform: uppercase; 
+            font-weight: bold;
+        }
+        .admin-login button:hover { background-color: var(--lssd-olive-dark); color: var(--lssd-yellow); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-alt);
+            border: 1px solid var(--lssd-beige-main);
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            border-top: 5px solid var(--lssd-gold);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+        }
+
+        .stat-card h3 { margin: 0; color: var(--lssd-olive-dark); font-size: 2.5rem; font-weight: 800;}
+        .stat-card p { margin: 10px 0 0; font-weight: bold; font-size: 0.85em; text-transform: uppercase; color: var(--lssd-olive-main); }
+
+        .cargos-list { margin: 8px 0 0 0; padding-left: 20px; color: var(--danger); font-size: 0.9em; font-weight: bold; }
+        .cargos-list li { margin-bottom: 3px; }
+
+        .tsd-badge {
+            background-color: var(--lssd-gold);
+            color: var(--lssd-olive-dark);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>LSSD - Traffic Services Detail</h2>
+        <div class="tabs">
+            <button id="btn-control" class="active" onclick="switchTab('control')">Control de Tráfico</button>
+            <button id="btn-admin" onclick="switchTab('admin')">Panel Admin</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="control" class="tab-content active">
+            
+            <div class="info-banner">
+                <span><strong>Ubicación:</strong> <span id="lbl_op_ubicacion">No definida</span></span>
+                <span><strong>Fecha:</strong> <span id="lbl_op_fecha">No definida</span></span>
+                <span><strong>Encargado del Operativo:</strong> <span id="lbl_op_encargado">No definido</span></span>
+            </div>
+
+            <form id="controlForm">
+                <fieldset>
+                    <legend>Unidad Encargada (Autoguardado)</legend>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Encargado (Nombre y Apellido)</label>
+                            <input type="text" id="of_nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Serial (Ej: #1234)</label>
+                            <input type="text" id="of_serial" pattern="^#\d+$" title="Debe iniciar con # seguido de números" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Callsign (Ej: 123A)</label>
+                            <input type="text" id="of_callsign" pattern="^\d{3}[A-Za-z]$" title="Tres números y una letra" required>
+                        </div>
+                        <div class="form-group" style="flex: 0.5; justify-content: center; align-items: center; padding-bottom: 5px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; color: var(--lssd-olive-main);">
+                                <input type="checkbox" id="of_tsd" style="width: 22px; height: 22px; margin-right: 8px;"> 
+                                <strong>TSD</strong>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Registro de Sujeto y Vehículo</legend>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>#HASH (4 letras)</label>
+                            <input type="text" id="suj_hash" pattern="^[A-Za-z]{4}$" title="Exactamente 4 letras" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" id="suj_nombre" pattern="^[A-Za-zÀ-ÿ\s]+$" title="Solo letras" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido</label>
+                            <input type="text" id="suj_apellido" pattern="^[A-Za-zÀ-ÿ\s]+$" title="Solo letras" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Vehículo (Modelo)</label>
+                            <input type="text" id="veh_modelo" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Matrícula (Ej: ABC 123)</label>
+                            <input type="text" id="veh_matricula" pattern="^[A-Za-z]{3} \d{3}$" title="Tres letras, un espacio, tres números" required>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Resultado del Control</legend>
+                    <div style="margin-bottom: 20px; font-weight: bold; color: var(--lssd-olive-dark); text-transform: uppercase; font-size: 0.85em;">
+                        <label style="display: block; cursor: pointer; margin-bottom: 10px;">
+                            <input type="checkbox" id="chk_licencia" style="transform: scale(1.2); margin-right: 8px;"> Licencia de conducir vigente
+                        </label>
+                        <label style="display: block; cursor: pointer;">
+                            <input type="checkbox" id="chk_papeles" style="transform: scale(1.2); margin-right: 8px;"> Papeles del vehículo al día
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Estado Final</label>
+                        <select id="estado_final" onchange="toggleCargos()" required>
+                            <option value="" disabled selected>Seleccione estado...</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="Citado">Citado</option>
+                            <option value="Huída">Huída</option>
+                            <option value="Arrestado">Arrestado</option>
+                        </select>
+                    </div>
+
+                    <div id="cargosContainer">
+                        <strong style="color: var(--danger); text-transform: uppercase; font-size: 0.9em; display: block; margin-bottom: 15px;">
+                            Cargos Asociados a la Citación:
+                        </strong>
+                        <div class="checkbox-group" id="listaCargos">
+                            </div>
+                    </div>
+                </fieldset>
+
+                <button type="submit" class="btn-submit" id="btnSubmit">Enviar Registro</button>
+            </form>
+
+            <h3 style="margin-top: 40px; color: var(--lssd-olive-dark); text-transform: uppercase; border-bottom: 2px solid var(--lssd-gold); display: inline-block;">Resumen de Turno Actual</h3>
+            <div style="overflow-x: auto;">
+                <table id="tablaResumen">
+                    <thead>
+                        <tr>
+                            <th>Callsign</th>
+                            <th>Sujeto</th>
+                            <th>Vehículo</th>
+                            <th>Matrícula</th>
+                            <th>Estado y Cargos</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="admin" class="tab-content">
+            <div id="loginSection" class="admin-login">
+                <h3 style="color: var(--lssd-olive-dark); text-transform: uppercase;">Supervisores TSD</h3>
+                <input type="password" id="adminPass" placeholder="Ingrese Contraseña">
+                <button onclick="verificarAdmin()">Acceder</button>
+                <p id="errorMsg" style="color: var(--danger); display: none; margin-top: 15px; font-weight: bold;">Contraseña incorrecta.</p>
+            </div>
+
+            <div id="dashboardSection" style="display: none;">
+                
+                <fieldset style="background-color: #fff; border-color: var(--lssd-gold);">
+                    <legend style="background-color: var(--lssd-gold); color: var(--lssd-olive-dark);">Ajustes del Operativo / Control</legend>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ubicación</label>
+                            <input type="text" id="cfg_ubicacion" placeholder="Ej: Ruta 68, Milla 2">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha</label>
+                            <input type="date" id="cfg_fecha">
+                        </div>
+                        <div class="form-group">
+                            <label>Encargado</label>
+                            <input type="text" id="cfg_encargado" placeholder="Ej: Sgt. J. Doe">
+                        </div>
+                    </div>
+                    <button class="btn-action" style="padding: 10px; width: auto;" onclick="guardarInfoOperativo()">Actualizar Datos del Operativo</button>
+                </fieldset>
+
+                <div class="action-buttons-container">
+                    <button class="btn-export pdf" onclick="exportarPDF()">📄 Exportar PDF</button>
+                    <button class="btn-export html" onclick="exportarHTML()">🌐 Exportar HTML</button>
+                    <button class="btn-export reset" onclick="resetearDatos()">⚠️ Reestablecer</button>
+                </div>
+                
+                <div id="pdfArea" style="padding: 20px; background: white;">
+                    <div style="text-align: center; border-bottom: 3px solid var(--lssd-gold); padding-bottom: 15px; margin-bottom: 20px;">
+                        <h2 style="color: var(--lssd-olive-dark); text-transform: uppercase; margin: 0;">Reporte Global - Traffic Services Detail</h2>
+                        <p style="margin: 5px 0 0; color: var(--lssd-olive-main); font-weight: bold; font-size: 0.9em; text-transform: uppercase;">
+                            Ubicación: <span id="pdf_ubicacion">---</span> | 
+                            Fecha: <span id="pdf_fecha">---</span> | 
+                            Encargado: <span id="pdf_encargado">---</span>
+                        </p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3 id="stat_total">0</h3>
+                            <p>Controles Totales</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="stat_citados">0</h3>
+                            <p>Citaciones (Multas)</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="stat_huidas">0</h3>
+                            <p>Prófugos (Huídas)</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="stat_arrestos">0</h3>
+                            <p>Arrestados</p>
+                        </div>
+                    </div>
+
+                    <h3 style="color: var(--lssd-olive-main); text-transform: uppercase; margin-top: 30px;">Unidades Participantes</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Callsign</th>
+                                <th>Serial</th>
+                                <th>Nombre Completo</th>
+                                <th>División</th>
+                                <th>Controles</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaDeputies"></tbody>
+                    </table>
+
+                    <h3 style="color: var(--lssd-olive-main); text-transform: uppercase; margin-top: 40px;">Historial Completo de Ingresos</h3>
+                    <table style="font-size: 0.85em;">
+                        <thead>
+                            <tr>
+                                <th>Hora Ingreso</th>
+                                <th>Unidad</th>
+                                <th>HASH</th>
+                                <th>Sujeto</th>
+                                <th>Vehículo / Matrícula</th>
+                                <th>Docs</th>
+                                <th>Estado y Cargos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaHistorial"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN DE GOOGLE SHEETS ---
+        const SCRIPT_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI'; 
+
+        const cargos = [
+            "1.1 Exceso de Velocidad", "1.2 Estacionamiento indebido", "1.3 Carreras Ilegales",
+            "1.4 Conducción Temeraria", "1.5 Maniobrar sin medidas de seguridad",
+            "1.6 Portar neones prendidos", "1.7 Conducir sin licencia",
+            "1.8 Conducir en dirección contraria", "1.9 Licencias de piloto",
+            "1.10 Operación imprudente de aeronave", "1.11 Zonas de vuelo restringidas",
+            "1.12 Conducir ebrio/estupefacientes", "1.13 Conducción temeraria aérea/marítima",
+            "1.14 Evasión causando perjuicios", "1.15 Maniobrar sin licencia pertinente"
+        ];
+
+        let registros = JSON.parse(localStorage.getItem('tsd_registros')) || [];
+
+        window.onload = function() {
+            // Generar Checkboxes de Cargos
+            const contenedorCargos = document.getElementById('listaCargos');
+            cargos.forEach(cargo => {
+                contenedorCargos.innerHTML += `<label style="cursor:pointer;"><input type="checkbox" value="${cargo}" class="cargo-chk" style="margin-right: 5px;"> ${cargo}</label>`;
+            });
+
+            // Cargar datos autoguardados del Oficial
+            document.getElementById('of_nombre').value = localStorage.getItem('of_nombre') || '';
+            document.getElementById('of_serial').value = localStorage.getItem('of_serial') || '';
+            document.getElementById('of_callsign').value = localStorage.getItem('of_callsign') || '';
+            document.getElementById('of_tsd').checked = localStorage.getItem('of_tsd') === 'true';
+
+            ['of_nombre', 'of_serial', 'of_callsign'].forEach(id => {
+                document.getElementById(id).addEventListener('input', (e) => {
+                    localStorage.setItem(id, e.target.value.toUpperCase());
+                });
+            });
+            document.getElementById('of_tsd').addEventListener('change', (e) => {
+                localStorage.setItem('of_tsd', e.target.checked);
+            });
+
+            // Cargar Info del Operativo
+            cargarInfoOperativo();
+            actualizarTablas();
+        };
+
+        // --- LÓGICA DE INTERFAZ ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            document.getElementById(`btn-${tab}`).classList.add('active');
+            if(tab === 'admin') actualizarAdmin();
+        }
+
+        function toggleCargos() {
+            const estado = document.getElementById('estado_final').value;
+            const container = document.getElementById('cargosContainer');
+            if (estado === 'Citado') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+                document.querySelectorAll('.cargo-chk').forEach(chk => chk.checked = false);
+            }
+        }
+
+        // --- INFO DEL OPERATIVO ---
+        function guardarInfoOperativo() {
+            const ubi = document.getElementById('cfg_ubicacion').value.toUpperCase();
+            const fec = document.getElementById('cfg_fecha').value;
+            const enc = document.getElementById('cfg_encargado').value.toUpperCase();
+            
+            localStorage.setItem('op_ubicacion', ubi);
+            localStorage.setItem('op_fecha', fec);
+            localStorage.setItem('op_encargado', enc);
+            
+            cargarInfoOperativo();
+            alert("Información del operativo actualizada exitosamente.");
+        }
+
+        function cargarInfoOperativo() {
+            const ubi = localStorage.getItem('op_ubicacion') || 'No definida';
+            const fec = localStorage.getItem('op_fecha') || 'No definida';
+            const enc = localStorage.getItem('op_encargado') || 'No definido';
+
+            document.getElementById('lbl_op_ubicacion').innerText = ubi;
+            document.getElementById('lbl_op_fecha').innerText = fec;
+            document.getElementById('lbl_op_encargado').innerText = enc;
+
+            document.getElementById('cfg_ubicacion').value = ubi !== 'No definida' ? ubi : '';
+            document.getElementById('cfg_fecha').value = fec !== 'No definida' ? fec : '';
+            document.getElementById('cfg_encargado').value = enc !== 'No definido' ? enc : '';
+
+            document.getElementById('pdf_ubicacion').innerText = ubi;
+            document.getElementById('pdf_fecha').innerText = fec;
+            document.getElementById('pdf_encargado').innerText = enc;
+        }
+
+        // --- GUARDAR REGISTRO ---
+        document.getElementById('controlForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btnSubmit');
+            btnSubmit.innerText = "ENVIANDO DATOS AL SHEET...";
+            btnSubmit.disabled = true;
+
+            let cargosSeleccionados = [];
+            if (document.getElementById('estado_final').value === 'Citado') {
+                document.querySelectorAll('.cargo-chk:checked').forEach(chk => cargosSeleccionados.push(chk.value));
+            }
+
+            const isTSD = document.getElementById('of_tsd').checked;
+
+            const nuevoRegistro = {
+                fecha: new Date().toLocaleString(),
+                of_nombre: document.getElementById('of_nombre').value.toUpperCase(),
+                of_serial: document.getElementById('of_serial').value.toUpperCase(),
+                of_callsign: document.getElementById('of_callsign').value.toUpperCase(),
+                of_tsd: isTSD, 
+                suj_hash: document.getElementById('suj_hash').value.toUpperCase(),
+                suj_nombre: document.getElementById('suj_nombre').value.toUpperCase(),
+                suj_apellido: document.getElementById('suj_apellido').value.toUpperCase(),
+                veh_modelo: document.getElementById('veh_modelo').value.toUpperCase(),
+                veh_matricula: document.getElementById('veh_matricula').value.toUpperCase(),
+                licencia: document.getElementById('chk_licencia').checked,
+                papeles: document.getElementById('chk_papeles').checked,
+                estado: document.getElementById('estado_final').value,
+                cargos: cargosSeleccionados
+            };
+
+            try {
+                if (SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
+                    await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(nuevoRegistro)
+                    });
+                }
+
+                registros.push(nuevoRegistro);
+                localStorage.setItem('tsd_registros', JSON.stringify(registros));
+
+                document.getElementById('suj_hash').value = '';
+                document.getElementById('suj_nombre').value = '';
+                document.getElementById('suj_apellido').value = '';
+                document.getElementById('veh_modelo').value = '';
+                document.getElementById('veh_matricula').value = '';
+                document.getElementById('chk_licencia').checked = false;
+                document.getElementById('chk_papeles').checked = false;
+                document.getElementById('estado_final').value = '';
+                toggleCargos();
+
+                actualizarTablas();
+                alert("Control registrado exitosamente.");
+            } catch (error) {
+                alert("Hubo un error al guardar. Revisa tu conexión.");
+            } finally {
+                btnSubmit.innerText = "Enviar Registro";
+                btnSubmit.disabled = false;
+            }
+        });
+
+        // --- ACTUALIZAR TABLAS Y ADMIN ---
+        function formatearEstado(r) {
+            let html = `<strong>${r.estado}</strong>`;
+            if (r.estado === 'Citado' && r.cargos && r.cargos.length > 0) {
+                html += `<ul class="cargos-list">`;
+                r.cargos.forEach(c => html += `<li>${c}</li>`);
+                html += `</ul>`;
+            }
+            return html;
+        }
+
+        function actualizarTablas() {
+            const tbodyResumen = document.querySelector('#tablaResumen tbody');
+            tbodyResumen.innerHTML = '';
+            const recientes = registros.slice(-10).reverse();
+            recientes.forEach(r => {
+                const badge = r.of_tsd ? `<span class="tsd-badge">TSD</span> ` : '';
+                tbodyResumen.innerHTML += `
+                    <tr>
+                        <td style="font-weight:bold; color:var(--lssd-olive-main);">${badge}${r.of_callsign}</td>
+                        <td>${r.suj_nombre} ${r.suj_apellido} (#${r.suj_hash})</td>
+                        <td>${r.veh_modelo}</td>
+                        <td>${r.veh_matricula}</td>
+                        <td>${formatearEstado(r)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function verificarAdmin() {
+            const pass = document.getElementById('adminPass').value;
+            if (pass === 'TSD2026') {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'block';
+                actualizarAdmin();
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
+
+        function actualizarAdmin() {
+            document.getElementById('stat_total').innerText = registros.length;
+            document.getElementById('stat_citados').innerText = registros.filter(r => r.estado === 'Citado').length;
+            document.getElementById('stat_huidas').innerText = registros.filter(r => r.estado === 'Huída').length;
+            document.getElementById('stat_arrestos').innerText = registros.filter(r => r.estado === 'Arrestado').length;
+
+            const deputies = {};
+            registros.forEach(r => {
+                if(!deputies[r.of_serial]) {
+                    deputies[r.of_serial] = { callsign: r.of_callsign, nombre: r.of_nombre, isTSD: false, controles: 0 };
+                }
+                if(r.of_tsd) deputies[r.of_serial].isTSD = true; 
+                deputies[r.of_serial].controles++;
+            });
+
+            const tbodyDep = document.getElementById('tablaDeputies');
+            tbodyDep.innerHTML = '';
+            for (const serial in deputies) {
+                const d = deputies[serial];
+                const division = d.isTSD ? '<span class="tsd-badge">TSD</span>' : 'Patrulla Regular';
+                tbodyDep.innerHTML += `<tr>
+                    <td style="font-weight:bold;">${d.callsign}</td>
+                    <td>${serial}</td>
+                    <td>${d.nombre}</td>
+                    <td>${division}</td>
+                    <td>${d.controles}</td>
+                </tr>`;
+            }
+
+            const tbodyHist = document.getElementById('tablaHistorial');
+            tbodyHist.innerHTML = '';
+            [...registros].reverse().forEach(r => {
+                const docsStr = (r.licencia ? 'Lic✓ ' : 'Lic✗ ') + '<br>' + (r.papeles ? 'Pap✓' : 'Pap✗');
+                const badge = r.of_tsd ? `<span class="tsd-badge" style="font-size:0.7em;">TSD</span><br>` : '';
+                tbodyHist.innerHTML += `
+                    <tr>
+                        <td>${r.fecha.split(',')[0]}<br>${r.fecha.split(',')[1]}</td>
+                        <td style="font-weight:bold; color:var(--lssd-olive-main); text-align:center;">${badge}${r.of_callsign}</td>
+                        <td>${r.suj_hash}</td>
+                        <td>${r.suj_nombre} ${r.suj_apellido}</td>
+                        <td>${r.veh_modelo}<br><small>${r.veh_matricula}</small></td>
+                        <td>${docsStr}</td>
+                        <td>${formatearEstado(r)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- BOTONES DE ACCIÓN ADMIN ---
+        function exportarPDF() {
+            const elemento = document.getElementById('pdfArea');
+            const opt = {
+                margin:       10,
+                filename:     'TSD_Reporte_Global.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(elemento).save();
+        }
+
+        function exportarHTML() {
+            const contenido = document.getElementById('pdfArea').innerHTML;
+            
+            // Inyectamos el CSS base para que el HTML exportado mantenga el estilo
+            const estilos = `
+                <style>
+                    body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #ece7e0; color: #2b2b2b; padding: 30px; }
+                    .report-container { max-width: 1000px; margin: auto; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid #4f5a48; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 0.9em; }
+                    th, td { border: 1px solid #d4c4b3; padding: 12px; text-align: left; }
+                    th { background-color: #3b4436; color: #d4c4b3; text-transform: uppercase; border-bottom: 2px solid #c5a059;}
+                    tr:nth-child(even) { background-color: #f9f8f6; }
+                    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+                    .stat-card { background: #f9f8f6; border: 1px solid #d4c4b3; padding: 20px; text-align: center; border-radius: 8px; border-top: 5px solid #c5a059; }
+                    .stat-card h3 { margin: 0; color: #3b4436; font-size: 2.5rem; }
+                    .stat-card p { margin: 10px 0 0; font-weight: bold; font-size: 0.85em; text-transform: uppercase; color: #4f5a48; }
+                    .cargos-list { margin: 8px 0 0 0; padding-left: 20px; color: #b30000; font-size: 0.9em; font-weight: bold; }
+                    .tsd-badge { background-color: #c5a059; color: #3b4436; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; font-weight: bold; }
+                </style>
+            `;
+
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Reporte TSD</title>
+                    ${estilos}
+                </head>
+                <body>
+                    <div class="report-container">
+                        ${contenido}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'TSD_Reporte_Global.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function resetearDatos() {
+            if(confirm("⚠️ ATENCIÓN: ¿Estás seguro de que deseas eliminar TODOS los registros de controles? Esta acción no se puede deshacer y limpiará la tabla actual.")) {
+                registros = [];
+                localStorage.removeItem('tsd_registros');
+                actualizarTablas();
+                actualizarAdmin();
+                alert("La base de datos local ha sido reestablecida a cero.");
+            }
+        }
+    </script>
+</body>
+</html>
