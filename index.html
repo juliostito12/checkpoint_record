@@ -23,14 +23,12 @@
             --excel-green-dark: #155724;
         }
 
-        /* FUENTE MÁS COMPACTA */
         body { font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif; background-color: var(--lssd-beige-light); color: var(--text-main); margin: 0; padding: 0; line-height: 1.5; font-size: 14.5px; }
         
         header { background-color: var(--lssd-olive-dark); color: var(--text-light); padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--lssd-gold); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .header-title-container { display: flex; align-items: center; }
         .header-title-container img { height: 45px; margin-right: 15px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3)); }
         
-        /* JERARQUÍA DE ENCABEZADOS */
         header h2 { margin: 0; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--lssd-beige-main); font-size: 1.35rem; }
         h3 { font-size: 1.2rem; margin-bottom: 12px; }
         legend { background-color: var(--lssd-olive-main); color: var(--lssd-beige-main); padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--lssd-gold); }
@@ -38,7 +36,6 @@
         .tabs button { background-color: transparent; color: var(--lssd-beige-main); border: 1px solid var(--lssd-gold); padding: 8px 16px; cursor: pointer; border-radius: 4px; margin-left: 10px; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; transition: all 0.2s ease-in-out; }
         .tabs button:hover, .tabs button.active { background-color: var(--lssd-gold); color: var(--lssd-olive-dark); }
         
-        /* CONTENEDOR MÁS ANCHO */
         .container { max-width: 1200px; margin: 20px auto; background: var(--bg-main); padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--lssd-olive-main); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -52,7 +49,6 @@
         .form-group { flex: 1; display: flex; flex-direction: column; min-width: 150px; }
         label { margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; color: var(--lssd-olive-dark); text-transform: uppercase;}
         
-        /* INPUTS MÁS COMPACTOS */
         input[type="text"], input[type="date"], input[type="password"], select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; text-transform: uppercase; font-size: 0.95rem; background-color: #fff; box-sizing: border-box;}
         input:focus, select:focus { outline: none; border-color: var(--lssd-gold); box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.3); }
         input:invalid { border-color: #e3a4a4; }
@@ -62,7 +58,6 @@
         @media (min-width: 800px) { .checkbox-group { column-count: 2; column-gap: 20px; } }
         .checkbox-group label { display: block; margin-bottom: 6px; break-inside: avoid; text-transform: none; color: var(--text-main); font-weight: normal; }
 
-        /* BOTONES PROPORCIONALES */
         .btn-submit, .btn-action { background-color: var(--lssd-olive-main); color: var(--text-light); border: 1px solid var(--lssd-gold); padding: 12px 20px; cursor: pointer; border-radius: 4px; font-size: 0.95rem; width: 100%; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.1); margin-top: 10px; }
         .btn-submit:hover, .btn-action:hover { background-color: var(--lssd-olive-dark); color: var(--lssd-yellow); }
         .btn-submit:disabled { background-color: #8c9388; cursor: not-allowed; border-color: #ccc; }
@@ -77,6 +72,10 @@
         .btn-export.excel:hover { background-color: var(--excel-green-dark); color: #fff; }
         .btn-export.reset { background-color: var(--danger); color: #fff; border-color: #800000; margin-left: auto; }
         .btn-export.reset:hover { background-color: #800000; }
+
+        /* Botón pequeño para actualizar estado */
+        .btn-action-small { background-color: #fcf6f6; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.75rem; cursor: pointer; border-radius: 3px; margin-top: 6px; font-weight: bold; transition: all 0.2s; text-transform: uppercase;}
+        .btn-action-small:hover { background-color: var(--danger); color: #fff; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; background-color: #fff; }
         th, td { border: 1px solid var(--lssd-beige-main); padding: 10px; text-align: left; vertical-align: middle; }
@@ -108,6 +107,24 @@
         .toast.error { background-color: var(--danger); border-left: 6px solid #800000; }
         
         #resetFormContainer { display: none; background-color: #fdf3f3; border: 1px solid var(--danger); padding: 8px 12px; border-radius: 6px; margin-left: auto; align-items: center; gap: 10px; }
+
+        /* --- MODAL CONFIRMACIÓN --- */
+        #modalOverlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;
+        }
+        .custom-modal {
+            background: var(--bg-main); padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-top: 5px solid var(--lssd-gold);
+        }
+        .custom-modal h3 { color: var(--lssd-olive-dark); margin-top: 0; font-size: 1.4rem; text-transform: uppercase;}
+        .custom-modal p { margin-bottom: 20px; color: var(--text-main); font-size: 1rem; font-weight: 500; }
+        .modal-buttons { display: flex; gap: 15px; justify-content: center; }
+        .modal-btn { padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: all 0.2s; font-size: 0.9rem;}
+        .modal-btn.confirm { background-color: var(--lssd-olive-main); color: white; border: 1px solid var(--lssd-gold); }
+        .modal-btn.confirm:hover { background-color: var(--lssd-olive-dark); color: var(--lssd-yellow); }
+        .modal-btn.cancel { background-color: #e0e0e0; color: #333; }
+        .modal-btn.cancel:hover { background-color: #ccc; }
     </style>
 </head>
 <body>
@@ -373,6 +390,17 @@
 
     <div id="toast-container"></div>
 
+    <div id="modalOverlay">
+        <div class="custom-modal">
+            <h3 id="modalTitle">Confirmar Acción</h3>
+            <p id="modalMessage">¿Estás seguro de realizar este cambio?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn confirm" onclick="confirmarCambioEstado()">Confirmar</button>
+                <button class="modal-btn cancel" onclick="cerrarModalCambioEstado()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SCRIPT_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI'; 
 
@@ -391,6 +419,10 @@
         let sortColumn = '';
         let sortDesc = false;
 
+        // Variables para el control del Modal de Estado
+        let indexCambioPendiente = -1;
+        let estadoCambioPendiente = '';
+
         function mostrarToast(mensaje, tipo = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -403,6 +435,17 @@
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 400); 
             }, 3500);
+        }
+
+        // Generar string de fecha en formato GMT puro
+        function getGMTDateString() {
+            const now = new Date();
+            const d = String(now.getUTCDate()).padStart(2, '0');
+            const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+            const y = now.getUTCFullYear();
+            const hh = String(now.getUTCHours()).padStart(2, '0');
+            const mm = String(now.getUTCMinutes()).padStart(2, '0');
+            return `${d}/${m}/${y}, ${hh}:${mm} GMT`;
         }
 
         window.onload = function() {
@@ -527,7 +570,7 @@
             }
 
             const nuevoRegistro = {
-                fecha: new Date().toLocaleString(),
+                fecha: getGMTDateString(),
                 of_callsign: document.getElementById('of_callsign').value.toUpperCase(),
                 of_nombre: document.getElementById('of_nombre').value.toUpperCase(),
                 of_serial: document.getElementById('of_serial').value.replace('#', ''), 
@@ -590,6 +633,51 @@
             }
             return html;
         }
+
+        /* --- LÓGICA MODAL PARA CAMBIO DE ESTADO --- */
+        function abrirModalCambioEstado(index, nuevoEstado) {
+            indexCambioPendiente = index;
+            estadoCambioPendiente = nuevoEstado;
+            
+            const modal = document.getElementById('modalOverlay');
+            const msj = document.getElementById('modalMessage');
+            
+            if (nuevoEstado === 'Arrestado') {
+                msj.innerHTML = `¿Confirmas que deseas cambiar el estado del control de <strong style="color:var(--danger)">Huída</strong> a <strong style="color:var(--lssd-olive-dark)">Arrestado</strong>?`;
+            } else {
+                msj.innerHTML = `¿Confirmas que deseas <strong>revertir</strong> el estado de este control a <strong style="color:var(--danger)">Huída</strong>?`;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function cerrarModalCambioEstado() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            indexCambioPendiente = -1;
+            estadoCambioPendiente = '';
+        }
+
+        function confirmarCambioEstado() {
+            if (indexCambioPendiente > -1) {
+                if (estadoCambioPendiente === 'Arrestado') {
+                    // Marcamos que originalmente era huida para poder revertirlo
+                    registros[indexCambioPendiente].prevEstado = 'Huída';
+                    registros[indexCambioPendiente].estado = 'Arrestado';
+                    mostrarToast("Estado actualizado a Arrestado.");
+                } else {
+                    // Se revierte a huida y se borra el historial previo
+                    registros[indexCambioPendiente].prevEstado = '';
+                    registros[indexCambioPendiente].estado = 'Huída';
+                    mostrarToast("Estado revertido a Huída.");
+                }
+                
+                localStorage.setItem('tsd_registros', JSON.stringify(registros));
+                actualizarTablas();
+                actualizarAdmin();
+            }
+            cerrarModalCambioEstado();
+        }
+        /* ------------------------------------------ */
 
         function actualizarTablas() {
             const tbodyResumen = document.querySelector('#tablaResumen tbody');
@@ -671,7 +759,18 @@
 
             const tbodyHist = document.getElementById('tablaHistorial');
             tbodyHist.innerHTML = '';
-            [...registros].reverse().forEach(r => {
+            
+            [...registros].reverse().forEach((r, reversedIndex) => {
+                const originalIndex = registros.length - 1 - reversedIndex;
+                let estadoHTML = formatearEstado(r);
+                
+                // Botones dinámicos para actualización de estado (Se ocultan al exportar)
+                if (r.estado === 'Huída') {
+                    estadoHTML += `<br><button class="btn-action-small no-export" onclick="abrirModalCambioEstado(${originalIndex}, 'Arrestado')">➜ Cambiar a Arrestado</button>`;
+                } else if (r.estado === 'Arrestado' && r.prevEstado === 'Huída') {
+                    estadoHTML += `<br><button class="btn-action-small no-export" style="color:var(--lssd-olive-dark); border-color:var(--lssd-olive-dark);" onclick="abrirModalCambioEstado(${originalIndex}, 'Huída')">↺ Revertir a Huída</button>`;
+                }
+
                 tbodyHist.innerHTML += `
                     <tr>
                         <td style="font-size:0.85rem;">${r.fecha.split(',')[0]}<br>${r.fecha.split(',')[1]}</td>
@@ -679,15 +778,23 @@
                         <td>${r.suj_nombre} ${r.suj_apellido} <strong style="color:var(--lssd-olive-main);">#${r.suj_hash}</strong></td>
                         <td>${r.veh_modelo}</td>
                         <td>${r.veh_matricula}</td>
-                        <td>${formatearEstado(r)}</td>
+                        <td>${estadoHTML}</td>
                     </tr>
                 `;
+            });
+        }
+
+        // Función para ocultar elementos interactivos antes de exportar
+        function ocultarBotonesExport(ocultar) {
+            document.querySelectorAll('.no-export').forEach(el => {
+                el.style.display = ocultar ? 'none' : 'inline-block';
             });
         }
 
         function exportarPDF() {
             try {
                 window.scrollTo(0,0);
+                ocultarBotonesExport(true);
                 mostrarToast("Generando archivo PDF...");
                 const elemento = document.getElementById('pdfArea');
                 const opt = { 
@@ -698,15 +805,20 @@
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
                 };
                 html2pdf().set(opt).from(elemento).save().then(() => {
+                    ocultarBotonesExport(false);
                     mostrarToast("PDF descargado con éxito.");
                 });
             } catch (error) {
+                ocultarBotonesExport(false);
                 mostrarToast("Error al generar PDF.", "error");
             }
         }
 
         function exportarHTML() {
+            ocultarBotonesExport(true);
             const contenido = document.getElementById('pdfArea').innerHTML;
+            ocultarBotonesExport(false);
+
             const tagS = '<' + 'style' + '>'; const tagSc = '<' + '/' + 'style' + '>';
             const docHead = '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="UTF-8">\n<title>Reporte TSD</title>\n';
             const docBody = '\n<' + '/' + 'head>\n<body>\n<div class="report-container">\n';
