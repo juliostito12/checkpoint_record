@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LSSD TSD - Traffic Services Detail</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         :root {
             /* PALETA DE COLORES LSSD */
@@ -73,7 +78,6 @@
         .btn-export.reset { background-color: var(--danger); color: #fff; border-color: #800000; margin-left: auto; }
         .btn-export.reset:hover { background-color: #800000; }
 
-        /* Botón pequeño para actualizar estado */
         .btn-action-small { background-color: #fcf6f6; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.75rem; cursor: pointer; border-radius: 3px; margin-top: 6px; font-weight: bold; transition: all 0.2s; text-transform: uppercase;}
         .btn-action-small:hover { background-color: var(--danger); color: #fff; }
 
@@ -109,14 +113,8 @@
         #resetFormContainer { display: none; background-color: #fdf3f3; border: 1px solid var(--danger); padding: 8px 12px; border-radius: 6px; margin-left: auto; align-items: center; gap: 10px; }
 
         /* --- MODAL CONFIRMACIÓN --- */
-        #modalOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center;
-        }
-        .custom-modal {
-            background: var(--bg-main); padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-top: 5px solid var(--lssd-gold);
-        }
+        #modalOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
+        .custom-modal { background: var(--bg-main); padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-top: 5px solid var(--lssd-gold); }
         .custom-modal h3 { color: var(--lssd-olive-dark); margin-top: 0; font-size: 1.4rem; text-transform: uppercase;}
         .custom-modal p { margin-bottom: 20px; color: var(--text-main); font-size: 1rem; font-weight: 500; }
         .modal-buttons { display: flex; gap: 15px; justify-content: center; }
@@ -144,9 +142,9 @@
         <div id="control" class="tab-content active">
             
             <div class="info-banner">
-                <span><strong>Ubicación:</strong> <span id="lbl_op_ubicacion">No definida</span></span>
-                <span><strong>Fecha:</strong> <span id="lbl_op_fecha">No definida</span></span>
-                <span><strong>Encargado del Operativo:</strong> <span id="lbl_op_encargado">No definido</span></span>
+                <span><strong>Ubicación:</strong> <span id="lbl_op_ubicacion">Cargando...</span></span>
+                <span><strong>Fecha:</strong> <span id="lbl_op_fecha">Cargando...</span></span>
+                <span><strong>Encargado del Operativo:</strong> <span id="lbl_op_encargado">Cargando...</span></span>
             </div>
 
             <form id="controlForm">
@@ -324,7 +322,6 @@
                         <button class="btn-export reset" style="margin:0; padding: 8px 15px;" onclick="ejecutarResetTotal()">Borrar Todo</button>
                         <button class="btn-export" style="margin:0; padding: 8px 15px; background-color:#ccc; color:#333;" onclick="toggleResetUI()">Cancelar</button>
                     </div>
-
                 </div>
                 
                 <div id="pdfArea" style="padding: 20px; background: white;">
@@ -402,8 +399,22 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI'; 
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyArjeMqEY-ofl_uWyU5h9Kjkjzi6EwxwsI",
+            authDomain: "lssd-tsd-panel.firebaseapp.com",
+            databaseURL: "https://lssd-tsd-panel-default-rtdb.firebaseio.com",
+            projectId: "lssd-tsd-panel",
+            storageBucket: "lssd-tsd-panel.firebasestorage.app",
+            messagingSenderId: "635451395444",
+            appId: "1:635451395444:web:a166c5842f459c7eedb021",
+            measurementId: "G-6NGEK60GYC"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
+        // --- CONSTANTES ---
         const cargos = [
             "1.1 Exceso de Velocidad", 
             "1.2 Estacionamiento indebido", 
@@ -415,12 +426,10 @@
             "1.8 Conducir en dirección contraria"
         ];
 
-        let registros = JSON.parse(localStorage.getItem('tsd_registros')) || [];
+        let registros = [];
         let sortColumn = '';
         let sortDesc = false;
-
-        // Variables para el control del Modal de Estado
-        let indexCambioPendiente = -1;
+        let idCambioPendiente = '';
         let estadoCambioPendiente = '';
 
         function mostrarToast(mensaje, tipo = 'success') {
@@ -437,7 +446,7 @@
             }, 3500);
         }
 
-        // Generar string de fecha en formato GMT puro
+        // Formato GMT puro
         function getGMTDateString() {
             const now = new Date();
             const d = String(now.getUTCDate()).padStart(2, '0');
@@ -449,11 +458,13 @@
         }
 
         window.onload = function() {
+            // Generar Checkboxes
             const contenedorCargos = document.getElementById('listaCargos');
             cargos.forEach(cargo => {
                 contenedorCargos.innerHTML += `<label style="cursor:pointer;"><input type="checkbox" value="${cargo}" class="cargo-chk" style="margin-right: 5px;"> ${cargo}</label>`;
             });
 
+            // Autoguardado LOCAL de credenciales del oficial
             const idsGuardados = ['of_callsign', 'of_nombre', 'of_serial', 'of_nombre2', 'of_serial2'];
             idsGuardados.forEach(id => {
                 if(localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
@@ -468,13 +479,50 @@
             document.getElementById('of_tsd2').addEventListener('change', (e) => localStorage.setItem('of_tsd2', e.target.checked));
 
             document.getElementById('chk_licencia').addEventListener('change', function() {
-                if (document.getElementById('estado_final').value === 'Citado') {
-                    actualizarCargoLicencia();
+                if (document.getElementById('estado_final').value === 'Citado') actualizarCargoLicencia();
+            });
+
+            // --- ESCUCHADORES DE FIREBASE EN TIEMPO REAL ---
+            
+            // 1. Escuchar Registros de Tráfico
+            database.ref('registros').on('value', (snapshot) => {
+                registros = [];
+                snapshot.forEach((child) => {
+                    let data = child.val();
+                    data.id = child.key; // Guardamos el ID único de Firebase
+                    registros.push(data);
+                });
+                
+                actualizarTablas();
+                if(document.getElementById('dashboardSection').style.display === 'block') {
+                    actualizarAdmin();
                 }
             });
 
-            cargarInfoOperativo();
-            actualizarTablas();
+            // 2. Escuchar Ajustes del Operativo
+            database.ref('operativo').on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                const ubi = data.ubicacion || 'No definida';
+                const fec = data.fecha || 'No definida';
+                const ran = data.rango || '';
+                const enc = data.encargado || 'No definido';
+
+                let encargadoTxt = enc;
+                if (enc !== 'No definido' && ran !== '') encargadoTxt = `${ran}. ${enc}`;
+
+                document.getElementById('lbl_op_ubicacion').innerText = ubi;
+                document.getElementById('lbl_op_fecha').innerText = fec;
+                document.getElementById('lbl_op_encargado').innerText = encargadoTxt;
+
+                document.getElementById('cfg_ubicacion').value = ubi !== 'No definida' ? ubi : '';
+                document.getElementById('cfg_fecha').value = fec !== 'No definida' ? fec : '';
+                document.getElementById('cfg_rango').value = ran;
+                document.getElementById('cfg_encargado').value = enc !== 'No definido' ? enc : '';
+
+                document.getElementById('pdf_ubicacion').innerText = ubi;
+                document.getElementById('pdf_fecha').innerText = fec;
+                document.getElementById('pdf_encargado').innerText = encargadoTxt;
+            });
         };
 
         function switchTab(tab) {
@@ -482,7 +530,9 @@
             document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
             document.getElementById(tab).classList.add('active');
             document.getElementById(`btn-${tab}`).classList.add('active');
-            if(tab === 'admin') actualizarAdmin();
+            if(tab === 'admin' && document.getElementById('dashboardSection').style.display === 'block') {
+                actualizarAdmin();
+            }
         }
 
         function toggleCargos() {
@@ -517,49 +567,25 @@
         }
 
         function guardarInfoOperativo() {
-            const ubi = document.getElementById('cfg_ubicacion').value.toUpperCase();
-            const fec = document.getElementById('cfg_fecha').value;
-            const ran = document.getElementById('cfg_rango').value;
-            const enc = document.getElementById('cfg_encargado').value.toUpperCase();
+            const dataOperativo = {
+                ubicacion: document.getElementById('cfg_ubicacion').value.toUpperCase(),
+                fecha: document.getElementById('cfg_fecha').value,
+                rango: document.getElementById('cfg_rango').value,
+                encargado: document.getElementById('cfg_encargado').value.toUpperCase()
+            };
             
-            localStorage.setItem('op_ubicacion', ubi);
-            localStorage.setItem('op_fecha', fec);
-            localStorage.setItem('op_rango', ran);
-            localStorage.setItem('op_encargado', enc);
-            
-            cargarInfoOperativo();
-            mostrarToast("Información del operativo actualizada exitosamente.");
+            database.ref('operativo').set(dataOperativo).then(() => {
+                mostrarToast("Información del operativo actualizada exitosamente.");
+            }).catch(() => {
+                mostrarToast("Error de conexión con la central.", "error");
+            });
         }
 
-        function cargarInfoOperativo() {
-            const ubi = localStorage.getItem('op_ubicacion') || 'No definida';
-            const fec = localStorage.getItem('op_fecha') || 'No definida';
-            const ran = localStorage.getItem('op_rango') || '';
-            const enc = localStorage.getItem('op_encargado') || 'No definido';
-
-            let encargadoTxt = enc;
-            if (enc !== 'No definido' && ran !== '') {
-                encargadoTxt = `${ran}. ${enc}`;
-            }
-
-            document.getElementById('lbl_op_ubicacion').innerText = ubi;
-            document.getElementById('lbl_op_fecha').innerText = fec;
-            document.getElementById('lbl_op_encargado').innerText = encargadoTxt;
-
-            document.getElementById('cfg_ubicacion').value = ubi !== 'No definida' ? ubi : '';
-            document.getElementById('cfg_fecha').value = fec !== 'No definida' ? fec : '';
-            document.getElementById('cfg_rango').value = ran;
-            document.getElementById('cfg_encargado').value = enc !== 'No definido' ? enc : '';
-
-            document.getElementById('pdf_ubicacion').innerText = ubi;
-            document.getElementById('pdf_fecha').innerText = fec;
-            document.getElementById('pdf_encargado').innerText = encargadoTxt;
-        }
-
-        document.getElementById('controlForm').addEventListener('submit', async function(e) {
+        // Enviar Nuevo Registro a Firebase
+        document.getElementById('controlForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmit');
-            btnSubmit.innerText = "ENVIANDO DATOS...";
+            btnSubmit.innerText = "ENVIANDO A CENTRAL...";
             btnSubmit.disabled = true;
 
             let cargosSeleccionados = [];
@@ -589,13 +615,7 @@
                 cargos: cargosSeleccionados
             };
 
-            try {
-                if (SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
-                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nuevoRegistro) });
-                }
-                registros.push(nuevoRegistro);
-                localStorage.setItem('tsd_registros', JSON.stringify(registros));
-
+            database.ref('registros').push(nuevoRegistro).then(() => {
                 document.getElementById('suj_hash').value = '';
                 document.getElementById('suj_nombre').value = '';
                 document.getElementById('suj_apellido').value = '';
@@ -604,15 +624,14 @@
                 document.getElementById('chk_licencia').checked = false;
                 document.getElementById('estado_final').value = '';
                 toggleCargos();
-
-                actualizarTablas();
+                
                 mostrarToast("Control de tráfico registrado exitosamente.");
-            } catch (error) {
-                mostrarToast("Error al guardar. Verifica tu conexión.", "error");
-            } finally {
+            }).catch(() => {
+                mostrarToast("Error al conectar con la base de datos.", "error");
+            }).finally(() => {
                 btnSubmit.innerText = "Enviar Registro";
                 btnSubmit.disabled = false;
-            }
+            });
         });
 
         function formatearEstado(r) {
@@ -634,50 +653,42 @@
             return html;
         }
 
-        /* --- LÓGICA MODAL PARA CAMBIO DE ESTADO --- */
-        function abrirModalCambioEstado(index, nuevoEstado) {
-            indexCambioPendiente = index;
+        function abrirModalCambioEstado(id, nuevoEstado) {
+            idCambioPendiente = id;
             estadoCambioPendiente = nuevoEstado;
-            
             const modal = document.getElementById('modalOverlay');
             const msj = document.getElementById('modalMessage');
             
             if (nuevoEstado === 'Arrestado') {
-                msj.innerHTML = `¿Confirmas que deseas cambiar el estado del control de <strong style="color:var(--danger)">Huída</strong> a <strong style="color:var(--lssd-olive-dark)">Arrestado</strong>?`;
+                msj.innerHTML = `¿Confirmas que deseas cambiar el estado de este control de <strong style="color:var(--danger)">Huída</strong> a <strong style="color:var(--lssd-olive-dark)">Arrestado</strong>?`;
             } else {
                 msj.innerHTML = `¿Confirmas que deseas <strong>revertir</strong> el estado de este control a <strong style="color:var(--danger)">Huída</strong>?`;
             }
-            
             modal.style.display = 'flex';
         }
 
         function cerrarModalCambioEstado() {
             document.getElementById('modalOverlay').style.display = 'none';
-            indexCambioPendiente = -1;
+            idCambioPendiente = '';
             estadoCambioPendiente = '';
         }
 
         function confirmarCambioEstado() {
-            if (indexCambioPendiente > -1) {
+            if (idCambioPendiente !== '') {
                 if (estadoCambioPendiente === 'Arrestado') {
-                    // Marcamos que originalmente era huida para poder revertirlo
-                    registros[indexCambioPendiente].prevEstado = 'Huída';
-                    registros[indexCambioPendiente].estado = 'Arrestado';
-                    mostrarToast("Estado actualizado a Arrestado.");
+                    database.ref('registros/' + idCambioPendiente).update({
+                        estado: 'Arrestado',
+                        prevEstado: 'Huída'
+                    }).then(() => mostrarToast("Estado actualizado en la central."));
                 } else {
-                    // Se revierte a huida y se borra el historial previo
-                    registros[indexCambioPendiente].prevEstado = '';
-                    registros[indexCambioPendiente].estado = 'Huída';
-                    mostrarToast("Estado revertido a Huída.");
+                    database.ref('registros/' + idCambioPendiente).update({
+                        estado: 'Huída',
+                        prevEstado: null
+                    }).then(() => mostrarToast("Estado revertido en la central."));
                 }
-                
-                localStorage.setItem('tsd_registros', JSON.stringify(registros));
-                actualizarTablas();
-                actualizarAdmin();
             }
             cerrarModalCambioEstado();
         }
-        /* ------------------------------------------ */
 
         function actualizarTablas() {
             const tbodyResumen = document.querySelector('#tablaResumen tbody');
@@ -760,15 +771,13 @@
             const tbodyHist = document.getElementById('tablaHistorial');
             tbodyHist.innerHTML = '';
             
-            [...registros].reverse().forEach((r, reversedIndex) => {
-                const originalIndex = registros.length - 1 - reversedIndex;
+            [...registros].reverse().forEach(r => {
                 let estadoHTML = formatearEstado(r);
                 
-                // Botones dinámicos para actualización de estado (Se ocultan al exportar)
                 if (r.estado === 'Huída') {
-                    estadoHTML += `<br><button class="btn-action-small no-export" onclick="abrirModalCambioEstado(${originalIndex}, 'Arrestado')">➜ Cambiar a Arrestado</button>`;
+                    estadoHTML += `<br><button class="btn-action-small no-export" onclick="abrirModalCambioEstado('${r.id}', 'Arrestado')">➜ Cambiar a Arrestado</button>`;
                 } else if (r.estado === 'Arrestado' && r.prevEstado === 'Huída') {
-                    estadoHTML += `<br><button class="btn-action-small no-export" style="color:var(--lssd-olive-dark); border-color:var(--lssd-olive-dark);" onclick="abrirModalCambioEstado(${originalIndex}, 'Huída')">↺ Revertir a Huída</button>`;
+                    estadoHTML += `<br><button class="btn-action-small no-export" style="color:var(--lssd-olive-dark); border-color:var(--lssd-olive-dark);" onclick="abrirModalCambioEstado('${r.id}', 'Huída')">↺ Revertir a Huída</button>`;
                 }
 
                 tbodyHist.innerHTML += `
@@ -784,7 +793,6 @@
             });
         }
 
-        // Función para ocultar elementos interactivos antes de exportar
         function ocultarBotonesExport(ocultar) {
             document.querySelectorAll('.no-export').forEach(el => {
                 el.style.display = ocultar ? 'none' : 'inline-block';
@@ -796,6 +804,7 @@
                 window.scrollTo(0,0);
                 ocultarBotonesExport(true);
                 mostrarToast("Generando archivo PDF...");
+                
                 const elemento = document.getElementById('pdfArea');
                 const opt = { 
                     margin: 10, 
@@ -804,6 +813,7 @@
                     html2canvas: { scale: 2, useCORS: true }, 
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } 
                 };
+                
                 html2pdf().set(opt).from(elemento).save().then(() => {
                     ocultarBotonesExport(false);
                     mostrarToast("PDF descargado con éxito.");
@@ -888,19 +898,12 @@
             const pass = document.getElementById('resetPassVerify').value;
             
             if (pass === "p91;Z:3vjCB^") {
-                registros = []; 
-                localStorage.removeItem('tsd_registros'); 
-                localStorage.removeItem('op_ubicacion');
-                localStorage.removeItem('op_fecha');
-                localStorage.removeItem('op_rango');
-                localStorage.removeItem('op_encargado');
-                
-                cargarInfoOperativo(); 
-                actualizarTablas(); 
-                actualizarAdmin();
+                // Borramos todo en Firebase
+                database.ref('registros').remove();
+                database.ref('operativo').remove();
                 
                 toggleResetUI();
-                mostrarToast("Base de datos y ajustes restablecidos por completo.");
+                mostrarToast("Base de datos y ajustes eliminados globalmente.");
             } else {
                 mostrarToast("Contraseña de supervisor incorrecta.", "error");
             }
