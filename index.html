@@ -28,12 +28,14 @@
             --excel-green-dark: #155724;
         }
 
+        /* FUENTE MÁS COMPACTA */
         body { font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif; background-color: var(--lssd-beige-light); color: var(--text-main); margin: 0; padding: 0; line-height: 1.5; font-size: 14.5px; }
         
         header { background-color: var(--lssd-olive-dark); color: var(--text-light); padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--lssd-gold); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .header-title-container { display: flex; align-items: center; }
         .header-title-container img { height: 45px; margin-right: 15px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3)); }
         
+        /* JERARQUÍA DE ENCABEZADOS */
         header h2 { margin: 0; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--lssd-beige-main); font-size: 1.35rem; }
         h3 { font-size: 1.2rem; margin-bottom: 12px; }
         legend { background-color: var(--lssd-olive-main); color: var(--lssd-beige-main); padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--lssd-gold); }
@@ -41,6 +43,7 @@
         .tabs button { background-color: transparent; color: var(--lssd-beige-main); border: 1px solid var(--lssd-gold); padding: 8px 16px; cursor: pointer; border-radius: 4px; margin-left: 10px; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; transition: all 0.2s ease-in-out; }
         .tabs button:hover, .tabs button.active { background-color: var(--lssd-gold); color: var(--lssd-olive-dark); }
         
+        /* CONTENEDOR MÁS ANCHO */
         .container { max-width: 1200px; margin: 20px auto; background: var(--bg-main); padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--lssd-olive-main); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -54,6 +57,7 @@
         .form-group { flex: 1; display: flex; flex-direction: column; min-width: 150px; }
         label { margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; color: var(--lssd-olive-dark); text-transform: uppercase;}
         
+        /* INPUTS MÁS COMPACTOS */
         input[type="text"], input[type="date"], input[type="password"], select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; text-transform: uppercase; font-size: 0.95rem; background-color: #fff; box-sizing: border-box;}
         input:focus, select:focus { outline: none; border-color: var(--lssd-gold); box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.3); }
         input:invalid { border-color: #e3a4a4; }
@@ -63,6 +67,7 @@
         @media (min-width: 800px) { .checkbox-group { column-count: 2; column-gap: 20px; } }
         .checkbox-group label { display: block; margin-bottom: 6px; break-inside: avoid; text-transform: none; color: var(--text-main); font-weight: normal; }
 
+        /* BOTONES PROPORCIONALES */
         .btn-submit, .btn-action { background-color: var(--lssd-olive-main); color: var(--text-light); border: 1px solid var(--lssd-gold); padding: 12px 20px; cursor: pointer; border-radius: 4px; font-size: 0.95rem; width: 100%; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.1); margin-top: 10px; }
         .btn-submit:hover, .btn-action:hover { background-color: var(--lssd-olive-dark); color: var(--lssd-yellow); }
         .btn-submit:disabled { background-color: #8c9388; cursor: not-allowed; border-color: #ccc; }
@@ -399,16 +404,16 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN DE FIREBASE ---
+        // --- CONFIGURACIÓN DE FIREBASE (Ofuscada contra bots) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyArjeMqEY-ofl_uWyU5h9Kjkjzi6EwxwsI",
-            authDomain: "lssd-tsd-panel.firebaseapp.com",
-            databaseURL: "https://lssd-tsd-panel-default-rtdb.firebaseio.com",
-            projectId: "lssd-tsd-panel",
-            storageBucket: "lssd-tsd-panel.firebasestorage.app",
-            messagingSenderId: "635451395444",
-            appId: "1:635451395444:web:a166c5842f459c7eedb021",
-            measurementId: "G-6NGEK60GYC"
+            apiKey: atob("QUl6YVN5QXJqZU1xRVktb2ZsX3VXeVU1aDlLamtranppNkV3eHdzSQ=="),
+            authDomain: atob("bHNzZC10c2QtcGFuZWwuZmlyZWJhc2VhcHAuY29t"),
+            databaseURL: atob("aHR0cHM6Ly9sc3NkLXRzZC1wYW5lbC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20="),
+            projectId: atob("bHNzZC10c2QtcGFuZWw="),
+            storageBucket: atob("bHNzZC10c2QtcGFuZWwuZmlyZWJhc2VzdG9yYWdlLmFwcA=="),
+            messagingSenderId: atob("NjM1NDUxMzk1NDQ0"),
+            appId: atob("MTo2MzU0NTEzOTU0NDQ6d2ViOmExNjZjNTg0MmY0NTljN2VlZGIwMjE="),
+            measurementId: atob("Ry02TkdFSzYwR1lD")
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -591,7 +596,7 @@
             let cargosSeleccionados = [];
             if (document.getElementById('estado_final').value === 'Citado') {
                 document.querySelectorAll('.cargo-chk').forEach(chk => {
-                    if(chk.checked) cargosSeleccionados.push(chk.value);
+                    if(chk.checked || chk.disabled) cargosSeleccionados.push(chk.value);
                 });
             }
 
@@ -708,7 +713,8 @@
         }
 
         function verificarAdmin() {
-            if (document.getElementById('adminPass').value === 'TSD2026') {
+            // Obfuscated password "TSD2026"
+            if (btoa(document.getElementById('adminPass').value) === 'VFNEMjAyNg==') {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('dashboardSection').style.display = 'block';
                 actualizarAdmin();
@@ -897,8 +903,8 @@
         function ejecutarResetTotal() {
             const pass = document.getElementById('resetPassVerify').value;
             
-            if (pass === "p91;Z:3vjCB^") {
-                // Borramos todo en Firebase
+            // Obfuscated reset password "p91;Z:3vjCB^"
+            if (btoa(pass) === 'cDkxO1o6M3ZqQ0Je') {
                 database.ref('registros').remove();
                 database.ref('operativo').remove();
                 
