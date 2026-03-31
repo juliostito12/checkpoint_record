@@ -63,6 +63,19 @@
         input:invalid { border-color: #e3a4a4; }
         input[type="password"] { text-transform: none; } 
 
+        /* --- AUTOCOMPLETADO DE VEHÍCULOS --- */
+        .autocomplete-items {
+            position: absolute; border: 1px solid var(--lssd-gold); border-top: none; z-index: 999;
+            top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto;
+            background-color: #fff; border-radius: 0 0 4px 4px; box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            display: none; /* Oculto por defecto */
+        }
+        .autocomplete-items div {
+            padding: 10px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #eee;
+            font-size: 0.9rem; color: var(--text-main); text-transform: uppercase;
+        }
+        .autocomplete-items div:hover { background-color: var(--lssd-beige-light); color: var(--lssd-olive-dark); font-weight: bold; }
+
         .checkbox-group { column-count: 1; margin-top: 12px; font-size: 0.9rem; }
         @media (min-width: 800px) { .checkbox-group { column-count: 2; column-gap: 20px; } }
         .checkbox-group label { display: block; margin-bottom: 6px; break-inside: avoid; text-transform: none; color: var(--text-main); font-weight: normal; }
@@ -134,7 +147,7 @@
 
     <header>
         <div class="header-title-container">
-            <img src="https://i.imgur.com/dhfFMoN.png" alt="LSSD Logo">
+            <img src="https://i.imgur.com/dhfFMoN.png" alt="LSSD Logo" referrerpolicy="no-referrer">
             <h2>LSSD - Traffic Services Detail</h2>
         </div>
         <div class="tabs">
@@ -214,9 +227,10 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group" style="position: relative;">
                             <label>Vehículo (Modelo)</label>
-                            <input type="text" id="veh_modelo" required>
+                            <input type="text" id="veh_modelo" placeholder="Ej: BUFFALO STX" autocomplete="off" required>
+                            <div id="veh_modelo_list" class="autocomplete-items"></div>
                         </div>
                         <div class="form-group">
                             <label>Matrícula (Ej: 123 ABC)</label>
@@ -327,6 +341,7 @@
                         <button class="btn-export reset" style="margin:0; padding: 8px 15px;" onclick="ejecutarResetTotal()">Borrar Todo</button>
                         <button class="btn-export" style="margin:0; padding: 8px 15px; background-color:#ccc; color:#333;" onclick="toggleResetUI()">Cancelar</button>
                     </div>
+
                 </div>
                 
                 <div id="pdfArea" style="padding: 20px; background: white;">
@@ -419,7 +434,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // --- CONSTANTES ---
+        // --- CONSTANTES Y VARIABLES GLOBALES ---
         const cargos = [
             "1.1 Exceso de Velocidad", 
             "1.2 Estacionamiento indebido", 
@@ -431,6 +446,17 @@
             "1.8 Conducir en dirección contraria"
         ];
 
+        // Lista de respaldo en caso de que el JSON no se lea
+        let gtaVehicles = [
+            "ADDER [ADDER]", "AKUMA [AKUMA]", "BANSHEE [BANSHEE]", "BATI 801 [BATI]", 
+            "BUFFALO [BUFFALO]", "BUFFALO S [BUFFALO2]", "BUFFALO STX [BUFFALO4]", 
+            "COMET [COMET]", "DOMINATOR [DOMINATOR]", "ELEGY RH8 [ELEGY2]", 
+            "ENTITY XF [ENTITYXF]", "FUTO [FUTO]", "GRANGER [GRANGER]", 
+            "INFERNUS [INFERNUS]", "KURUMA [KURUMA]", "ORACLE [ORACLE]", 
+            "PENUMBRA [PENUMBRA]", "RUINER [RUINER]", "SULTAN [SULTAN]", 
+            "TAILGATER [TAILGATER]", "V-STR [VSTR]", "ZENTORNO [ZENTORNO]"
+        ];
+        
         let registros = [];
         let sortColumn = '';
         let sortDesc = false;
@@ -451,7 +477,11 @@
             }, 3500);
         }
 
-        // Formato GMT puro
+        // Función para escapar caracteres especiales en RegEx
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+        }
+
         function getGMTDateString() {
             const now = new Date();
             const d = String(now.getUTCDate()).padStart(2, '0');
@@ -462,8 +492,131 @@
             return `${d}/${m}/${y}, ${hh}:${mm} GMT`;
         }
 
+        // --- CARGA DE VEHÍCULOS (DESDE JSON LOCAL) ---
+        async function descargarVehiculosGTA() {
+            try {
+                // Buscamos el archivo local que está en la misma carpeta
+                const response = await fetch('./vehicles.json');
+                
+                if(!response.ok) throw new Error("No se encontró el archivo vehicles.json");
+                
+                const data = await response.json();
+                
+                let vehiculosArray = [];
+                if (Array.isArray(data)) vehiculosArray = data;
+                else if (data.vehicles || data.data || data.cars) vehiculosArray = data.vehicles || data.data || data.cars;
+                else vehiculosArray = Object.values(data);
+
+                let nombresSet = new Set();
+                
+                vehiculosArray.forEach(v => {
+                    if (!v) return;
+                    if (typeof v === 'string') { nombresSet.add(v.toUpperCase()); return; }
+                    
+                    let namePart = "";
+                    
+                    // Verificamos si DisplayName es un objeto (como en tu archivo json)
+                    if (v.DisplayName && typeof v.DisplayName === 'object') {
+                        // Priorizamos español, si no, inglés.
+                        namePart = v.DisplayName.Spanish || v.DisplayName.English || "";
+                    } else if (typeof v.DisplayName === 'string') {
+                        namePart = v.DisplayName;
+                    } else {
+                        // Respaldo de otras propiedades
+                        namePart = v.localizedName || v.LocalizedName || v.displayName || v.title || v.name || v.Name || "";
+                    }
+                    
+                    let modelPart = v.Name || v.name || v.model || v.modelName || v.spawnName || v.SpawnName || "";
+                    
+                    // Si por algún motivo namePart quedó vacío, usamos el modelo como nombre
+                    if (!namePart && modelPart) namePart = modelPart;
+                    
+                    namePart = String(namePart).trim();
+                    modelPart = String(modelPart).trim();
+
+                    if (namePart && modelPart && namePart.toLowerCase() !== modelPart.toLowerCase()) {
+                        nombresSet.add(`${namePart} [${modelPart}]`.toUpperCase());
+                    } else if (namePart) {
+                        nombresSet.add(namePart.toUpperCase());
+                    } else if (modelPart) {
+                        nombresSet.add(modelPart.toUpperCase());
+                    }
+                });
+                
+                const extraidos = [...nombresSet].filter(Boolean);
+                if(extraidos.length > 0) {
+                    gtaVehicles = extraidos.sort();
+                    console.log(`✅ Base de datos local cargada. Vehículos listos: ${gtaVehicles.length}`);
+                }
+                
+            } catch (error) {
+                console.warn("Fallo al leer vehicles.json local. Asegúrate de que el archivo exista. Usando respaldo interno.", error);
+            }
+        }
+
         window.onload = function() {
-            // Generar Checkboxes
+            // 1. Iniciar descarga de vehículos
+            descargarVehiculosGTA();
+
+            // 2. Lógica del Autocompletado (Filtrado Inteligente sin guiones)
+            const vehInput = document.getElementById('veh_modelo');
+            const vehList = document.getElementById('veh_modelo_list');
+
+            vehInput.addEventListener('input', function() {
+                let val = this.value;
+                vehList.innerHTML = '';
+                
+                if (!val) {
+                    vehList.style.display = 'none';
+                    return false;
+                }
+                
+                // Normalizamos lo que escribe el usuario (quitamos guiones, espacios y pasamos a minúsculas)
+                const normalizedInput = val.toLowerCase().replace(/[\s\-_]/g, '');
+                
+                const coincidencias = gtaVehicles.filter(v => {
+                    // Normalizamos también el string para compararlos justamente
+                    const normalizedV = v.toLowerCase().replace(/[\s\-_]/g, '');
+                    return normalizedV.includes(normalizedInput);
+                });
+                
+                if(coincidencias.length > 0) {
+                    vehList.style.display = 'block';
+                    
+                    // Solo mostramos hasta 20 opciones
+                    coincidencias.slice(0, 20).forEach(match => {
+                        let div = document.createElement('div');
+                        
+                        // Mostramos la sugerencia. Si el usuario escribió un espacio exacto, resaltamos esa parte
+                        const regex = new RegExp(`(${escapeRegExp(val)})`, "gi");
+                        if (match.match(regex)) {
+                            div.innerHTML = match.replace(regex, "<strong style='color:var(--danger)'>$1</strong>");
+                        } else {
+                            // Si la coincidencia fue por la normalización (ej: "vstr" encontró "V-STR")
+                            div.innerHTML = match;
+                        }
+                        
+                        div.addEventListener('click', function() {
+                            vehInput.value = match;
+                            vehList.innerHTML = '';
+                            vehList.style.display = 'none';
+                        });
+                        vehList.appendChild(div);
+                    });
+                } else {
+                    vehList.style.display = 'none';
+                }
+            });
+
+            // Ocultar menú de vehículos si se hace clic fuera
+            document.addEventListener('click', function(e) {
+                if (e.target !== vehInput) {
+                    vehList.innerHTML = '';
+                    vehList.style.display = 'none';
+                }
+            });
+
+            // Generar Checkboxes de cargos
             const contenedorCargos = document.getElementById('listaCargos');
             cargos.forEach(cargo => {
                 contenedorCargos.innerHTML += `<label style="cursor:pointer;"><input type="checkbox" value="${cargo}" class="cargo-chk" style="margin-right: 5px;"> ${cargo}</label>`;
@@ -488,23 +641,17 @@
             });
 
             // --- ESCUCHADORES DE FIREBASE EN TIEMPO REAL ---
-            
-            // 1. Escuchar Registros de Tráfico
             database.ref('registros').on('value', (snapshot) => {
                 registros = [];
                 snapshot.forEach((child) => {
                     let data = child.val();
-                    data.id = child.key; // Guardamos el ID único de Firebase
+                    data.id = child.key; 
                     registros.push(data);
                 });
-                
                 actualizarTablas();
-                if(document.getElementById('dashboardSection').style.display === 'block') {
-                    actualizarAdmin();
-                }
+                if(document.getElementById('dashboardSection').style.display === 'block') actualizarAdmin();
             });
 
-            // 2. Escuchar Ajustes del Operativo
             database.ref('operativo').on('value', (snapshot) => {
                 const data = snapshot.val() || {};
                 const ubi = data.ubicacion || 'No definida';
@@ -586,7 +733,6 @@
             });
         }
 
-        // Enviar Nuevo Registro a Firebase
         document.getElementById('controlForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const btnSubmit = document.getElementById('btnSubmit');
@@ -713,7 +859,6 @@
         }
 
         function verificarAdmin() {
-            // Obfuscated password "TSD2026"
             if (btoa(document.getElementById('adminPass').value) === 'VFNEMjAyNg==') {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('dashboardSection').style.display = 'block';
@@ -903,7 +1048,6 @@
         function ejecutarResetTotal() {
             const pass = document.getElementById('resetPassVerify').value;
             
-            // Obfuscated reset password "p91;Z:3vjCB^"
             if (btoa(pass) === 'cDkxO1o6M3ZqQ0Je') {
                 database.ref('registros').remove();
                 database.ref('operativo').remove();
