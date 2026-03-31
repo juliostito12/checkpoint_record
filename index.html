@@ -446,7 +446,7 @@
             "1.8 Conducir en dirección contraria"
         ];
 
-        // Lista de respaldo en caso de que el JSON no se lea
+        // Lista de respaldo
         let gtaVehicles = [
             "ADDER [ADDER]", "AKUMA [AKUMA]", "BANSHEE [BANSHEE]", "BATI 801 [BATI]", 
             "BUFFALO [BUFFALO]", "BUFFALO S [BUFFALO2]", "BUFFALO STX [BUFFALO4]", 
@@ -477,7 +477,6 @@
             }, 3500);
         }
 
-        // Función para escapar caracteres especiales en RegEx
         function escapeRegExp(string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
         }
@@ -495,9 +494,7 @@
         // --- CARGA DE VEHÍCULOS (DESDE JSON LOCAL) ---
         async function descargarVehiculosGTA() {
             try {
-                // Buscamos el archivo local que está en la misma carpeta
                 const response = await fetch('./vehicles.json');
-                
                 if(!response.ok) throw new Error("No se encontró el archivo vehicles.json");
                 
                 const data = await response.json();
@@ -515,20 +512,16 @@
                     
                     let namePart = "";
                     
-                    // Verificamos si DisplayName es un objeto (como en tu archivo json)
                     if (v.DisplayName && typeof v.DisplayName === 'object') {
-                        // Priorizamos español, si no, inglés.
                         namePart = v.DisplayName.Spanish || v.DisplayName.English || "";
                     } else if (typeof v.DisplayName === 'string') {
                         namePart = v.DisplayName;
                     } else {
-                        // Respaldo de otras propiedades
                         namePart = v.localizedName || v.LocalizedName || v.displayName || v.title || v.name || v.Name || "";
                     }
                     
                     let modelPart = v.Name || v.name || v.model || v.modelName || v.spawnName || v.SpawnName || "";
                     
-                    // Si por algún motivo namePart quedó vacío, usamos el modelo como nombre
                     if (!namePart && modelPart) namePart = modelPart;
                     
                     namePart = String(namePart).trim();
@@ -546,19 +539,16 @@
                 const extraidos = [...nombresSet].filter(Boolean);
                 if(extraidos.length > 0) {
                     gtaVehicles = extraidos.sort();
-                    console.log(`✅ Base de datos local cargada. Vehículos listos: ${gtaVehicles.length}`);
                 }
                 
             } catch (error) {
-                console.warn("Fallo al leer vehicles.json local. Asegúrate de que el archivo exista. Usando respaldo interno.", error);
+                console.warn("Fallo al leer vehicles.json local.", error);
             }
         }
 
         window.onload = function() {
-            // 1. Iniciar descarga de vehículos
             descargarVehiculosGTA();
 
-            // 2. Lógica del Autocompletado (Filtrado Inteligente sin guiones)
             const vehInput = document.getElementById('veh_modelo');
             const vehList = document.getElementById('veh_modelo_list');
 
@@ -571,11 +561,9 @@
                     return false;
                 }
                 
-                // Normalizamos lo que escribe el usuario (quitamos guiones, espacios y pasamos a minúsculas)
                 const normalizedInput = val.toLowerCase().replace(/[\s\-_]/g, '');
                 
                 const coincidencias = gtaVehicles.filter(v => {
-                    // Normalizamos también el string para compararlos justamente
                     const normalizedV = v.toLowerCase().replace(/[\s\-_]/g, '');
                     return normalizedV.includes(normalizedInput);
                 });
@@ -583,16 +571,13 @@
                 if(coincidencias.length > 0) {
                     vehList.style.display = 'block';
                     
-                    // Solo mostramos hasta 20 opciones
                     coincidencias.slice(0, 20).forEach(match => {
                         let div = document.createElement('div');
                         
-                        // Mostramos la sugerencia. Si el usuario escribió un espacio exacto, resaltamos esa parte
                         const regex = new RegExp(`(${escapeRegExp(val)})`, "gi");
                         if (match.match(regex)) {
                             div.innerHTML = match.replace(regex, "<strong style='color:var(--danger)'>$1</strong>");
                         } else {
-                            // Si la coincidencia fue por la normalización (ej: "vstr" encontró "V-STR")
                             div.innerHTML = match;
                         }
                         
@@ -608,7 +593,6 @@
                 }
             });
 
-            // Ocultar menú de vehículos si se hace clic fuera
             document.addEventListener('click', function(e) {
                 if (e.target !== vehInput) {
                     vehList.innerHTML = '';
@@ -616,13 +600,11 @@
                 }
             });
 
-            // Generar Checkboxes de cargos
             const contenedorCargos = document.getElementById('listaCargos');
             cargos.forEach(cargo => {
                 contenedorCargos.innerHTML += `<label style="cursor:pointer;"><input type="checkbox" value="${cargo}" class="cargo-chk" style="margin-right: 5px;"> ${cargo}</label>`;
             });
 
-            // Autoguardado LOCAL de credenciales del oficial
             const idsGuardados = ['of_callsign', 'of_nombre', 'of_serial', 'of_nombre2', 'of_serial2'];
             idsGuardados.forEach(id => {
                 if(localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
@@ -640,7 +622,7 @@
                 if (document.getElementById('estado_final').value === 'Citado') actualizarCargoLicencia();
             });
 
-            // --- ESCUCHADORES DE FIREBASE EN TIEMPO REAL ---
+            // --- ESCUCHADORES FIREBASE ---
             database.ref('registros').on('value', (snapshot) => {
                 registros = [];
                 snapshot.forEach((child) => {
@@ -846,11 +828,14 @@
             tbodyResumen.innerHTML = '';
             const recientes = registros.slice(-10).reverse();
             recientes.forEach(r => {
+                // Solo muestra la parte del nombre antes del corchete
+                let vehiculoLimpio = r.veh_modelo.split(' [')[0];
+                
                 tbodyResumen.innerHTML += `
                     <tr>
                         <td>${generarCeldaUnidad(r)}</td>
                         <td>${r.suj_nombre} ${r.suj_apellido} <strong style="color:var(--lssd-olive-main);">#${r.suj_hash}</strong></td>
-                        <td>${r.veh_modelo}</td>
+                        <td>${vehiculoLimpio}</td>
                         <td>${r.veh_matricula}</td>
                         <td>${formatearEstado(r)}</td>
                     </tr>
@@ -931,12 +916,15 @@
                     estadoHTML += `<br><button class="btn-action-small no-export" style="color:var(--lssd-olive-dark); border-color:var(--lssd-olive-dark);" onclick="abrirModalCambioEstado('${r.id}', 'Huída')">↺ Revertir a Huída</button>`;
                 }
 
+                // Solo muestra la parte del nombre antes del corchete
+                let vehiculoLimpio = r.veh_modelo.split(' [')[0];
+
                 tbodyHist.innerHTML += `
                     <tr>
                         <td style="font-size:0.85rem;">${r.fecha.split(',')[0]}<br>${r.fecha.split(',')[1]}</td>
                         <td style="font-weight:bold; color:var(--lssd-olive-main); text-align:left;">${r.of_callsign}</td>
                         <td>${r.suj_nombre} ${r.suj_apellido} <strong style="color:var(--lssd-olive-main);">#${r.suj_hash}</strong></td>
-                        <td>${r.veh_modelo}</td>
+                        <td>${vehiculoLimpio}</td>
                         <td>${r.veh_matricula}</td>
                         <td>${estadoHTML}</td>
                     </tr>
@@ -1010,10 +998,12 @@
 
             registros.forEach(r => {
                 let cargosStr = r.cargos ? r.cargos.join(" / ") : "";
+                let vehiculoLimpio = r.veh_modelo.split(' [')[0]; // Cortamos también para el Excel
+                
                 let row = [
                     `"${r.fecha}"`, `"${r.of_callsign}"`, `"${r.of_nombre}"`, `"${r.of_serial}"`, `"${r.of_tsd ? 'Si' : 'No'}"`,
                     `"${r.of_nombre2 || ''}"`, `"${r.of_serial2 || ''}"`, `"${r.of_tsd2 ? 'Si' : 'No'}"`, `"#${r.suj_hash}"`,
-                    `"${r.suj_nombre}"`, `"${r.suj_apellido}"`, `"${r.veh_modelo}"`, `"${r.veh_matricula}"`,
+                    `"${r.suj_nombre}"`, `"${r.suj_apellido}"`, `"${vehiculoLimpio}"`, `"${r.veh_matricula}"`,
                     `"${r.licencia ? 'Vigente' : 'No Vigente'}"`, `"${r.estado}"`, `"${cargosStr}"`
                 ];
                 csvContent += row.join(",") + "\n";
